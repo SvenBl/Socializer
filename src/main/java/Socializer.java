@@ -25,7 +25,7 @@ public class Socializer {
 
         JSONArray follows = getJSONArray(new URL("https://api.instagram.com/v1/users/self/follows?access_token="
                 + accessToken));
-        JSONArray follower = getJSONArray(new URL("https://api.instagram.com/v1/users/self/follows?access_token="
+        JSONArray follower = getJSONArray(new URL("https://api.instagram.com/v1/users/self/followed-by?access_token="
                 + accessToken));
         JSONArray likes = getJSONArray(new URL("https://api.instagram.com/v1/users/self/media/liked?access_token="
                 + accessToken));
@@ -44,26 +44,39 @@ public class Socializer {
                 commentsCount += parseInt(commentsArray.get("count").toString());
             }
 
+        //initiate mongodb
         MongoClient mongoClient = new MongoClient();
         DB db = mongoClient.getDB("mydb");
-        DBCollection coll = db.getCollection("testCollection");
+        DBCollection instagramColl = db.getCollection("instagramCollection");
+
+        //set flag false
+        DBCursor cursor = instagramColl.find();
+        try {
+
+            while (cursor.hasNext()) {
+                instagramColl.update(new BasicDBObject("id", cursor.next().get("id")),
+                        new BasicDBObject("$set", new BasicDBObject("follows", "false")));
+            }
+        }finally{
+                cursor.close();
+            }
 
         //insert followers
         for(int i = 0; i <= follower.size()-1;i++) {
             JSONObject followerID = (JSONObject) follower.get(i);
             BasicDBObject query = new BasicDBObject("id", followerID.get("id"));
-
-            DBCursor cursor = coll.find(query);
+            cursor = instagramColl.find(query);
 
             try {
 
                 if(cursor.hasNext()) {
-                    cursor.next().put("follows", "true");
+                    instagramColl.update(new BasicDBObject("id", cursor.next().get("id")),
+                            new BasicDBObject("$set", new BasicDBObject("follows", "true")));
                 }else{
                     BasicDBObject doc = new BasicDBObject("id", followerID.get("id"))
                             .append("username", followerID.get("username"))
                             .append("follows", "true");
-                    coll.insert(doc);
+                    instagramColl.insert(doc);
                 }
             } finally {
                 cursor.close();
@@ -73,7 +86,7 @@ public class Socializer {
 
         //get the user who don't follow anymore
         BasicDBObject query = new BasicDBObject("follows", "false");
-        DBCursor cursor = coll.find(query);
+        cursor = instagramColl.find(query);
         int notFollow = 0;
         try {
             while(cursor.hasNext()) {
@@ -92,6 +105,8 @@ public class Socializer {
         System.out.println("Likes on all Media: " + likesCount);
         System.out.println("Comments on all Media: " + commentsCount);
         System.out.println("Don't follow anymore: " + notFollow);
+
+
     }
 
 
