@@ -8,10 +8,10 @@ import com.mongodb.MongoClient;
 public class SocialDB {
 
     private DBCollection instagramCollection;
+    private DBCollection twitterCollection;
     private DB db;
 
     public SocialDB(String dbName){
-        //initiate mongodb
         MongoClient mongoClient = new MongoClient();
         db = mongoClient.getDB(dbName);
 
@@ -20,5 +20,10 @@ public class SocialDB {
     public DBCollection getInstagramCollection(){
         instagramCollection = db.getCollection("instagramCollection");
         return instagramCollection;
+    }
+
+    public DBCollection getTwitterCollection(){
+        twitterCollection = db.getCollection("instagramCollection");
+        return twitterCollection;
     }
 }

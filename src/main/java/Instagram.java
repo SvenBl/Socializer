@@ -44,26 +44,21 @@ public class Instagram {
                 + accessToken));
         this.follows = follows;
     }
-
-
     public void setFollower() throws MalformedURLException {
         JSONArray follower = getJSONArray(new URL("https://api.instagram.com/v1/users/self/followed-by?access_token="
                 + accessToken));
         this.follower = follower;
     }
-
     public void setLikes() throws MalformedURLException {
         JSONArray likes = getJSONArray(new URL("https://api.instagram.com/v1/users/self/media/liked?access_token="
                 + accessToken));
         this.likes = likes;
     }
-
     public void setRecentMedia() throws MalformedURLException {
         JSONArray recentMedia = getJSONArray(new URL("https://api.instagram.com/v1/users/self/media/recent/?access_token="
                 + accessToken));
         this.recentMedia = recentMedia;
     }
-
     public void setLikesCount() throws MalformedURLException {
         JSONObject currentObject = null;
         int likesCount = 0;
@@ -74,7 +69,6 @@ public class Instagram {
         }
         this.likesCount = likesCount;
     }
-
     public void setCommentsCount() throws MalformedURLException {
         JSONObject currentObject = null;
         int commentsCount = 0;
@@ -87,17 +81,16 @@ public class Instagram {
     }
 
     public Instagram(SocialDB socialDB) throws MalformedURLException {
-        //accessToken = getAccessToken();
         accessToken = "5455891555.ac2549d.e49aba4b9d694ae79c5bf5ab474ff5a0";
 
         instagramColl =  socialDB.getInstagramCollection();
+        //setAccessToken();
         setFollows();
         setFollower();
         setRecentMedia();
         setLikesCount();
         setLikes();
         setCommentsCount();
-        //setAccessToken();
         setFollowsFalse();
         insertFollowers();
         setNotFollower();
