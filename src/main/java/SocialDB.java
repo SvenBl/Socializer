@@ -2,8 +2,6 @@ import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.MongoClient;
 
-import java.util.Collection;
-
 /**
  * Created by disas on 06.06.2017.
  */

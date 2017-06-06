@@ -104,14 +104,14 @@ public class Instagram {
 
     }
 
-    public String getInstagramData() throws MalformedURLException {
-        instagramData = "Follows:" + follows.size()
+    public String printInstagramData() throws MalformedURLException {
+        instagramData = "Follows: " + follows.size()
                 + "\nFollower: " + follower.size()
                 + "\nLiked by User: " + likes.size()
                 + "\nLikes on all Media: " + likesCount
                 + "\nComments on all Media: " + commentsCount
                 + "\nDon't follow anymore: " + notFollow
-                + "List of Users who are not following anymore: " + userListNotFollow.toString()
+                + "\nList of Users who are not following anymore: " + userListNotFollow.toString()
         ;
         return instagramData;
     }
