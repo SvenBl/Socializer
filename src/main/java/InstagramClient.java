@@ -1,0 +1,179 @@
+import org.apache.commons.io.IOUtils;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
+import org.json.simple.parser.ParseException;
+
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+
+import static java.lang.Integer.parseInt;
+
+/**
+ * Created by disas on 08.06.2017.
+ */
+public class InstagramClient extends SocialNetworkClient {
+    private String accessToken;
+
+    private int followerCount;
+    private int followingCount;
+
+    private int postCount;
+    private int commentsCount;
+    private int likesCount;
+    private int likedCount;
+
+    private List<String> followerList;
+    private List<String> followingList;
+
+    private JSONArray recentMedia;
+
+    public InstagramClient() throws MalformedURLException {
+        super(Network.INSTAGRAM);
+        this.accessToken = "5455891555.ac2549d.e49aba4b9d694ae79c5bf5ab474ff5a0";
+        //setAccessToken();
+        setFollowerList();
+        setFollowingList();
+        setFollowerCount();
+        setFollowingCount();
+
+        setRecentMedia();
+        setPostCount();
+        setLikedCount();
+        setLikesCount();
+        setCommentsCount();
+
+        updateSocialDB(this.followerList);
+    }
+
+    @Override
+    public int getFollowerCount() {
+        return followerCount;
+    }
+
+    @Override
+    public int getFollowingCount() {
+        return followingCount;
+    }
+
+    @Override
+    public int getPostCount() {
+        return postCount;
+    }
+
+    @Override
+    public int getCommentsCount() {
+        return commentsCount;
+    }
+
+    @Override
+    public int getLikesCount() {
+        return likesCount;
+    }
+
+    @Override
+    public int getLikedCount() {
+        return likedCount;
+    }
+
+
+    private void setFollowerList() throws MalformedURLException {
+        this.followerList = new ArrayList<String>();
+        JSONArray jsonFollower = getJSONArray(new URL("https://api.instagram.com/v1/users/self/followed-by?access_token="
+                + this.accessToken));
+        for (int i=0; i<jsonFollower.size(); i++) {
+            JSONObject followerID = (JSONObject) jsonFollower.get(i);
+            this.followerList.add(followerID.get("id").toString());
+        }
+    }
+
+    private void setFollowerCount(){
+        this.followerCount = this.followerList.size();
+    }
+
+    private void setFollowingList() throws MalformedURLException {
+        this.followingList = new ArrayList<String>();
+        JSONArray jsonFollowing = getJSONArray(new URL("https://api.instagram.com/v1/users/self/follows?access_token="
+                + accessToken));
+        for (int i=0; i<jsonFollowing.size(); i++) {
+            JSONObject followerID = (JSONObject) jsonFollowing.get(i);
+            this.followingList.add(followerID.get("id").toString());
+        }
+    }
+
+    private void setFollowingCount(){
+        this.followingCount = followingList.size();
+    }
+
+    private void setRecentMedia() throws MalformedURLException {
+        JSONArray recentMedia = getJSONArray(new URL("https://api.instagram.com/v1/users/self/media/recent/?access_token="
+                + accessToken));
+        this.recentMedia = recentMedia;
+    }
+
+    private void setLikedCount() throws MalformedURLException {
+        JSONArray likes = getJSONArray(new URL("https://api.instagram.com/v1/users/self/media/liked?access_token="
+                + this.accessToken));
+        this.likedCount = likes.size();
+    }
+
+    private void setLikesCount() throws MalformedURLException {
+        JSONObject currentObject = null;
+        int likesCount = 0;
+        for(int i = 0; i<this.recentMedia.size()-1;i++) {
+            currentObject = (JSONObject) this.recentMedia.get(i);
+            JSONObject likesArray = (JSONObject) currentObject.get("likes");
+            likesCount += parseInt(likesArray.get("count").toString());
+        }
+        this.likesCount = likesCount;
+    }
+
+    private void setCommentsCount() throws MalformedURLException {
+        JSONObject currentObject = null;
+        int commentsCount = 0;
+        for(int i = 0; i<recentMedia.size()-1;i++) {
+            currentObject = (JSONObject) recentMedia.get(i);
+            JSONObject commentsArray = (JSONObject) currentObject.get("comments");
+            commentsCount += parseInt(commentsArray.get("count").toString());
+        }
+        this.commentsCount = commentsCount;
+    }
+
+    private void setPostCount(){
+        this.postCount = this.recentMedia.size();
+    }
+
+    private void setAccessToken() throws MalformedURLException {
+        String clientID = "ac2549ddc3b547b4a039c71791702921";
+        String redirectURI = "http://localhost:3000";
+        URL url = new URL("https://api.instagram.com/oauth/authorize/?client_id=" + clientID + "&redirect_uri=" + redirectURI +
+                "&response_type=token&scope=public_content+follower_list+comments+relationships+likes");
+
+        System.out.println(url);
+        Scanner sc = new Scanner(System.in);
+        System.out.print("Your Access-Token : ");
+        String accessToken = sc.next();
+        this.accessToken = accessToken;
+    }
+
+    private JSONArray getJSONArray(URL request){
+
+        String dataJson = null;
+        try {
+            dataJson = IOUtils.toString(request);
+
+            JSONObject dataJsonObject = (JSONObject) JSONValue.parseWithException(dataJson);
+            JSONArray dataArray = (JSONArray) dataJsonObject.get("data");
+            return dataArray;
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+}

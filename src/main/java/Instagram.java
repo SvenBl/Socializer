@@ -47,7 +47,8 @@ public class Instagram {
     public void setFollower() throws MalformedURLException {
         JSONArray follower = getJSONArray(new URL("https://api.instagram.com/v1/users/self/followed-by?access_token="
                 + accessToken));
-        this.follower = follower;
+        List<String> follower2 = getJSONArray(new URL("https://api.instagram.com/v1/users/self/followed-by?access_token="
+                + accessToken));
     }
     public void setLikes() throws MalformedURLException {
         JSONArray likes = getJSONArray(new URL("https://api.instagram.com/v1/users/self/media/liked?access_token="
@@ -97,7 +98,7 @@ public class Instagram {
 
     }
 
-    public String printInstagramData() throws MalformedURLException {
+    public String printData() throws MalformedURLException {
         instagramData = "Follows: " + follows.size()
                 + "\nFollower: " + follower.size()
                 + "\nLiked by User: " + likes.size()

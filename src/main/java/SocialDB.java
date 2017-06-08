@@ -13,17 +13,17 @@ public class SocialDB {
 
     public SocialDB(String dbName){
         MongoClient mongoClient = new MongoClient();
-        db = mongoClient.getDB(dbName);
+        this.db = mongoClient.getDB(dbName);
 
     }
 
     public DBCollection getInstagramCollection(){
-        instagramCollection = db.getCollection("instagramCollection");
+        instagramCollection = this.db.getCollection("instagramCollection");
         return instagramCollection;
     }
 
     public DBCollection getTwitterCollection(){
-        twitterCollection = db.getCollection("instagramCollection");
+        twitterCollection = this.db.getCollection("twitterCollection");
         return twitterCollection;
     }
 }
