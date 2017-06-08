@@ -115,8 +115,8 @@ public class InstagramClient extends SocialNetworkClient {
         this.followingList = new ArrayList<String>();
         JSONArray jsonFollowing = getJSONArray(new URL("https://api.instagram.com/v1/users/self/follows?access_token="
                 + accessToken));
-        for (int i=0; i<jsonFollowing.size(); i++) {
-            JSONObject followerID = (JSONObject) jsonFollowing.get(i);
+        for (Object aJsonFollowing : jsonFollowing) {
+            JSONObject followerID = (JSONObject) aJsonFollowing;
             this.followingList.add(followerID.get("id").toString());
         }
     }
@@ -138,7 +138,7 @@ public class InstagramClient extends SocialNetworkClient {
     private void setLikesCount() throws MalformedURLException {
         JSONObject currentObject;
         int likesCount = 0;
-        for(int i = 0; i<this.recentMedia.size()-1;i++) {
+        for(int i = 0; i<this.recentMedia.size();i++) {
             currentObject = (JSONObject) this.recentMedia.get(i);
             JSONObject likesArray = (JSONObject) currentObject.get("likes");
             likesCount += parseInt(likesArray.get("count").toString());
@@ -149,7 +149,7 @@ public class InstagramClient extends SocialNetworkClient {
     private void setCommentsCount() throws MalformedURLException {
         JSONObject currentObject;
         int commentsCount = 0;
-        for(int i = 0; i<recentMedia.size()-1;i++) {
+        for(int i = 0; i<recentMedia.size();i++) {
             currentObject = (JSONObject) recentMedia.get(i);
             JSONObject commentsArray = (JSONObject) currentObject.get("comments");
             commentsCount += parseInt(commentsArray.get("count").toString());
