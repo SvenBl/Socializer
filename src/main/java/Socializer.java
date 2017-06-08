@@ -1,16 +1,11 @@
-import twitter4j.*;
 
-import java.util.ArrayList;
-import java.util.List;
-
-/**
- * Created by disas on 05.06.2017.
- */
 public class Socializer {
 
     public static void main(String args[]) throws Exception {
 
+        //instagram
         SocialNetworkClient instagram = new InstagramClient();
+        SocialNetworkClient twitter = new TwitterClient();
         System.out.println("Instagram:");
         System.out.println("Follower: " + instagram.getFollowerCount());
         System.out.println("Following: " + instagram.getFollowingCount());
@@ -21,56 +16,20 @@ public class Socializer {
         System.out.println("Don't follow anymore: " + instagram.getNotFollow());
         System.out.println("List: " + instagram.getUserListNotFollow());
 
-        /*
+        System.out.println();
 
-        Twitter twitter = TwitterFactory.getSingleton();
-        User user = twitter.showUser(twitter.getId());
-
-
-
-        String twitterScreenName = twitter.getScreenName();
-        PagableResponseList<User> statuse = twitter.getFollowersList(twitterScreenName, -1, 100);
-        for (User follower : statuse) {
-            //System.out.println(follower.getScreenName());
-        }
-
-
-
-        List<String> followerIDs = new ArrayList<String>();
-        try {
-            long[] ids = twitter.getFollowersIDs(-1).getIDs();
-            for(int i=0; i<ids.length; i++) {
-                followerIDs.add(String.valueOf(ids[i]));
-            }
-        } catch(TwitterException te) {
-            te.printStackTrace();
-        }
-        //System.out.println(followerIDs);
-        System.out.println("Followers: " + user.getFollowersCount());
-        System.out.println("Friends: " + user.getFriendsCount());
-        System.out.println("Postcount: " + user.getStatusesCount());
-        System.out.println("Likes: " + user.getFavouritesCount());
-        System.out.println("Moments: " + user.getListedCount());
-        Paging paging = new Paging(1, 75);
-        System.out.println(twitter.getMentionsTimeline().size());
-        System.out.println(twitter.getRetweetsOfMe(paging).size());
-        ResponseList<Status>  test = twitter.getRetweetsOfMe(paging);
-        ResponseList<Status> test2 = twitter.getRetweetsOfMe(new Paging(2,75));
-
-        System.out.printf("size" + test.size());
-        System.out.println(test.get(0));
-        System.out.println(test2.size());
-
-        List<Status> statuses = twitter.getUserTimeline(new Paging(1,100));
-        List<Status> statuses2 = twitter.getUserTimeline(new Paging(2,100));
-        System.out.println("Showing home timeline.");
-            System.out.println(statuses.get(0).getUser().getName() + ":" +
-                    statuses.get(0).getText());
-        System.out.println(statuses2.get(0).getUser().getName() + ":" +
-                statuses2.get(0).getText());
-        System.out.println(statuses.size());
-        System.out.println(user.getStatusesCount());
-        */
+        //twitter
+        System.out.println("Twitter:");
+        System.out.println("Follower: " + twitter.getFollowerCount());
+        System.out.println("Following: " + twitter.getFollowingCount());
+        System.out.println("Posts: " + twitter.getPostCount());
+        System.out.println("Likes: " + twitter.getLikesCount());
+        System.out.println("Liked: " + twitter.getLikedCount());
+        System.out.println("Comments: " + twitter.getCommentsCount());
+        System.out.println("Retweets: " + twitter.getRetweetCount());
+        System.out.println("Mentions: " + twitter.getMentionCount());
+        System.out.println("Don't follow anymore: " + twitter.getNotFollow());
+        System.out.println("List: " + twitter.getUserListNotFollow());
     }
 
 

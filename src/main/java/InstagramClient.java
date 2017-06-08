@@ -13,9 +13,6 @@ import java.util.Scanner;
 
 import static java.lang.Integer.parseInt;
 
-/**
- * Created by disas on 08.06.2017.
- */
 public class InstagramClient extends SocialNetworkClient {
     private String accessToken;
 
@@ -80,13 +77,32 @@ public class InstagramClient extends SocialNetworkClient {
         return likedCount;
     }
 
+    @Override
+    public int getMentionCount() {
+        return 0;
+    }
+
+    @Override
+    public int getRetweetCount() {
+        return 0;
+    }
+
+    @Override
+    public List<String> getFollowerList() {
+        return followerList;
+    }
+
+    @Override
+    public List<String> getFollowingList() {
+        return followingList;
+    }
 
     private void setFollowerList() throws MalformedURLException {
         this.followerList = new ArrayList<String>();
         JSONArray jsonFollower = getJSONArray(new URL("https://api.instagram.com/v1/users/self/followed-by?access_token="
                 + this.accessToken));
-        for (int i=0; i<jsonFollower.size(); i++) {
-            JSONObject followerID = (JSONObject) jsonFollower.get(i);
+        for (Object aJsonFollower : jsonFollower) {
+            JSONObject followerID = (JSONObject) aJsonFollower;
             this.followerList.add(followerID.get("id").toString());
         }
     }
@@ -110,19 +126,17 @@ public class InstagramClient extends SocialNetworkClient {
     }
 
     private void setRecentMedia() throws MalformedURLException {
-        JSONArray recentMedia = getJSONArray(new URL("https://api.instagram.com/v1/users/self/media/recent/?access_token="
+        this.recentMedia = getJSONArray(new URL("https://api.instagram.com/v1/users/self/media/recent/?access_token="
                 + accessToken));
-        this.recentMedia = recentMedia;
     }
 
     private void setLikedCount() throws MalformedURLException {
-        JSONArray likes = getJSONArray(new URL("https://api.instagram.com/v1/users/self/media/liked?access_token="
-                + this.accessToken));
-        this.likedCount = likes.size();
+        this.likedCount = getJSONArray(new URL("https://api.instagram.com/v1/users/self/media/liked?access_token="
+                + this.accessToken)).size();
     }
 
     private void setLikesCount() throws MalformedURLException {
-        JSONObject currentObject = null;
+        JSONObject currentObject;
         int likesCount = 0;
         for(int i = 0; i<this.recentMedia.size()-1;i++) {
             currentObject = (JSONObject) this.recentMedia.get(i);
@@ -133,7 +147,7 @@ public class InstagramClient extends SocialNetworkClient {
     }
 
     private void setCommentsCount() throws MalformedURLException {
-        JSONObject currentObject = null;
+        JSONObject currentObject;
         int commentsCount = 0;
         for(int i = 0; i<recentMedia.size()-1;i++) {
             currentObject = (JSONObject) recentMedia.get(i);
@@ -156,19 +170,17 @@ public class InstagramClient extends SocialNetworkClient {
         System.out.println(url);
         Scanner sc = new Scanner(System.in);
         System.out.print("Your Access-Token : ");
-        String accessToken = sc.next();
-        this.accessToken = accessToken;
+        this.accessToken = sc.next();
     }
 
     private JSONArray getJSONArray(URL request){
 
-        String dataJson = null;
+        String dataJson;
         try {
             dataJson = IOUtils.toString(request);
 
             JSONObject dataJsonObject = (JSONObject) JSONValue.parseWithException(dataJson);
-            JSONArray dataArray = (JSONArray) dataJsonObject.get("data");
-            return dataArray;
+            return (JSONArray) dataJsonObject.get("data");
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ParseException e) {

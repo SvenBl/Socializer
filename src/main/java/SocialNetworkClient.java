@@ -36,6 +36,10 @@ public abstract class SocialNetworkClient {
     public abstract int getCommentsCount();
     public abstract int getLikesCount();
     public abstract int getLikedCount();
+    public abstract int getMentionCount();
+    public abstract int getRetweetCount();
+    public abstract List<String> getFollowerList();
+    public abstract List<String> getFollowingList();
 
     private void setFollowingFalse(){
         DBCursor cursor = coll.find();
