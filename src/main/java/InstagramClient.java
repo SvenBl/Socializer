@@ -97,45 +97,64 @@ public class InstagramClient extends SocialNetworkClient {
         return followingList;
     }
 
-    private void setFollowerList() throws MalformedURLException {
-        this.followerList = new ArrayList<String>();
-        JSONArray jsonFollower = getJSONArray(new URL("https://api.instagram.com/v1/users/self/followed-by?access_token="
-                + this.accessToken));
-        for (Object aJsonFollower : jsonFollower) {
-            JSONObject followerID = (JSONObject) aJsonFollower;
-            this.followerList.add(followerID.get("id").toString());
+    @Override
+    public void setFollowerList(){
+
+        try {
+            this.followerList = new ArrayList<String>();
+            JSONArray jsonFollower = getJSONArray(new URL("https://api.instagram.com/v1/users/self/followed-by?access_token="
+                    + this.accessToken));
+            for (Object aJsonFollower : jsonFollower) {
+                JSONObject followerID = (JSONObject) aJsonFollower;
+                this.followerList.add(followerID.get("id").toString());
+            }
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
         }
     }
 
-    private void setFollowerCount(){
+    @Override
+    public void setFollowerCount(){
         this.followerCount = this.followerList.size();
     }
 
-    private void setFollowingList() throws MalformedURLException {
-        this.followingList = new ArrayList<String>();
-        JSONArray jsonFollowing = getJSONArray(new URL("https://api.instagram.com/v1/users/self/follows?access_token="
-                + accessToken));
-        for (Object aJsonFollowing : jsonFollowing) {
-            JSONObject followerID = (JSONObject) aJsonFollowing;
-            this.followingList.add(followerID.get("id").toString());
+    @Override
+    public void setFollowingList(){
+        try {
+            this.followingList = new ArrayList<String>();
+            JSONArray jsonFollowing = getJSONArray(new URL("https://api.instagram.com/v1/users/self/follows?access_token="
+                    + accessToken));
+            for (Object aJsonFollowing : jsonFollowing) {
+                JSONObject followerID = (JSONObject) aJsonFollowing;
+                this.followingList.add(followerID.get("id").toString());
+            }
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
         }
     }
 
-    private void setFollowingCount(){
+    @Override
+    public void setFollowingCount(){
         this.followingCount = followingList.size();
     }
 
-    private void setRecentMedia() throws MalformedURLException {
+    public void setRecentMedia() throws MalformedURLException {
         this.recentMedia = getJSONArray(new URL("https://api.instagram.com/v1/users/self/media/recent/?access_token="
                 + accessToken));
     }
 
-    private void setLikedCount() throws MalformedURLException {
-        this.likedCount = getJSONArray(new URL("https://api.instagram.com/v1/users/self/media/liked?access_token="
-                + this.accessToken)).size();
+    @Override
+    public void setLikedCount(){
+        try {
+            this.likedCount = getJSONArray(new URL("https://api.instagram.com/v1/users/self/media/liked?access_token="
+                    + this.accessToken)).size();
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
     }
 
-    private void setLikesCount() throws MalformedURLException {
+    @Override
+    public void setLikesCount(){
         JSONObject currentObject;
         int likesCount = 0;
         for(int i = 0; i<this.recentMedia.size();i++) {
@@ -146,7 +165,8 @@ public class InstagramClient extends SocialNetworkClient {
         this.likesCount = likesCount;
     }
 
-    private void setCommentsCount() throws MalformedURLException {
+    @Override
+    public void setCommentsCount(){
         JSONObject currentObject;
         int commentsCount = 0;
         for(int i = 0; i<recentMedia.size();i++) {
@@ -157,7 +177,8 @@ public class InstagramClient extends SocialNetworkClient {
         this.commentsCount = commentsCount;
     }
 
-    private void setPostCount(){
+    @Override
+    public void setPostCount(){
         this.postCount = this.recentMedia.size();
     }
 
@@ -187,5 +208,15 @@ public class InstagramClient extends SocialNetworkClient {
             e.printStackTrace();
         }
         return null;
+    }
+
+    @Override
+    public void setMentionCount() {
+
+    }
+
+    @Override
+    public void setRetweetCount() {
+
     }
 }

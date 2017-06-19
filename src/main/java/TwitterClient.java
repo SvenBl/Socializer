@@ -3,6 +3,8 @@ import twitter4j.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.lang.Long.parseLong;
+
 public class TwitterClient extends SocialNetworkClient{
     private Twitter twitter;
     private User userID;
@@ -24,17 +26,24 @@ public class TwitterClient extends SocialNetworkClient{
             this.twitter = TwitterFactory.getSingleton();
             this.userID = twitter.showUser(twitter.getId());
 
-            setFollowerCount();
-            setFollowingCount();
-            setPostCount();
-            setLikedCount();
-            setMentionCount();
-            setFollowerList();
-            setFollowingList();
-            setLikesCount();
-            setRetweetCount();
+            //setFollowerCount();
+            //setFollowingCount();
+            //setPostCount();
+            //setLikedCount();
+            //setMentionCount();
+            //setFollowerList();
+            //setFollowingList();
+            //setLikesCount();
+            //setRetweetCount();
+            List<String> test = getFollowerByAccount("muxermann");
 
-            updateSocialDB(this.followerList);
+            //commentFirstPostByUser(test.get(0));
+            //followUsers(test, 2);
+            addFollowingUsersToDB(test,2,false,false);
+            showStatistics();
+
+
+            //updateSocialDB(this.followerList);
         } catch (TwitterException e) {
             e.printStackTrace();
         }
@@ -91,7 +100,7 @@ public class TwitterClient extends SocialNetworkClient{
         return this.followingList;
     }
 
-    private void setFollowerList(){
+    public void setFollowerList(){
         this.followerList = new ArrayList<String>();
         try {
             long[] ids = this.twitter.getFollowersIDs(-1).getIDs();
@@ -103,7 +112,72 @@ public class TwitterClient extends SocialNetworkClient{
         }
     }
 
-    private void setFollowingList(){
+    public List<String> getFollowerByAccount(String name){
+        List<String> followerList = new ArrayList<String>();
+        try {
+            long cursor = -1L;
+            IDs ids;
+            do {
+                ids = this.twitter.getFollowersIDs(name, cursor);
+                for(long id: ids.getIDs()) {
+                    followerList.add(String.valueOf(id));
+                }
+            } while((cursor = ids.getNextCursor()) != 0);
+        } catch(TwitterException te) {
+            te.printStackTrace();
+        }
+        return followerList;
+    }
+
+    public void followUser(String id){
+        try {
+            this.twitter.createFriendship(parseLong(id));
+
+        } catch (TwitterException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void followUsers(List<String> idList, int amount){
+        for (int i = 0; i < amount; i++) {
+            followUser(idList.get(i));
+        }
+    }
+
+    public void likeFirstPostByUser(String id){
+        try {
+            ResponseList<Status> tweets = this.twitter.getUserTimeline(Long.parseLong(id));
+            if(!tweets.get(0).isFavorited()) {
+                this.twitter.favorites().createFavorite(tweets.get(0).getId());
+            }
+        } catch (TwitterException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void commentFirstPostByUser(String id){
+        try {
+            ResponseList<Status> tweets = this.twitter.getUserTimeline(Long.parseLong(id));
+            int randomComment = (int)Math.random()*10+1;
+            List<String> comments = new ArrayList<String>();
+            comments.add("Nice");
+            comments.add("Exactly");
+            comments.add("You say it!");
+            comments.add("Cool");
+            comments.add("Wow");
+            comments.add("My saying");
+            comments.add("Amazing");
+            comments.add("Interesting");
+            comments.add("Nice !!");
+            comments.add(":O");
+
+            twitter.updateStatus(new StatusUpdate(comments.get(randomComment)).inReplyToStatusId(tweets.get(0).getId()));
+        } catch (TwitterException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void setFollowingList(){
         this.followingList = new ArrayList<String>();
         try {
             long[] ids = this.twitter.getFriendsIDs(-1).getIDs();
@@ -115,23 +189,23 @@ public class TwitterClient extends SocialNetworkClient{
         }
     }
 
-    private void setFollowerCount() {
+    public void setFollowerCount() {
         this.followerCount = this.userID.getFollowersCount();
     }
 
-    private void setFollowingCount() {
+    public void setFollowingCount() {
         this.followingCount = this.userID.getFriendsCount();
     }
 
-    private void setPostCount() {
+    public void setPostCount() {
         this.postCount = userID.getStatusesCount();
     }
 
-    private void setCommentsCount() {
+    public void setCommentsCount() {
 
     }
 
-    private void setLikesCount() {
+    public void setLikesCount() {
         List<Status> statuses;
         try {
             int page = 1;
@@ -155,7 +229,7 @@ public class TwitterClient extends SocialNetworkClient{
         }
     }
 
-    private void setRetweetCount() {
+    public void setRetweetCount() {
         int page = 1;
         int count = 75;
         ResponseList<Status> retweets;
@@ -176,11 +250,11 @@ public class TwitterClient extends SocialNetworkClient{
 
     }
 
-    private void setLikedCount() {
+    public void setLikedCount() {
         this.likedCount = userID.getFavouritesCount();
     }
 
-    private void setMentionCount() {
+    public void setMentionCount() {
         try {
             this.mentionCount = twitter.getMentionsTimeline().size();
         } catch (TwitterException e) {

@@ -3,9 +3,12 @@ public class Socializer {
 
     public static void main(String args[]) throws Exception {
 
-        //instagram
-        SocialNetworkClient instagram = new InstagramClient();
+
+        //SocialNetworkClient instagram = new InstagramClient();
         SocialNetworkClient twitter = new TwitterClient();
+
+        /*
+        //instagram
         System.out.println("Instagram:");
         System.out.println("Follower: " + instagram.getFollowerCount());
         System.out.println("Following: " + instagram.getFollowingCount());
@@ -17,6 +20,7 @@ public class Socializer {
         System.out.println("List: " + instagram.getUserListNotFollow());
 
         System.out.println();
+        */
 
         //twitter
         System.out.println("Twitter:");

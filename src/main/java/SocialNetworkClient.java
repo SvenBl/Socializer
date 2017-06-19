@@ -3,9 +3,6 @@ import com.mongodb.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by disas on 08.06.2017.
- */
 public abstract class SocialNetworkClient {
     private Network network;
     private DB db;
@@ -23,7 +20,7 @@ public abstract class SocialNetworkClient {
         try {
             this.mongoClient = new MongoClient();
             this.db = mongoClient.getDB("socialdb");
-            this.coll = this.db.getCollection("follower_" + this.network.toString().toLowerCase());
+
         } catch(Exception e) {
             e.printStackTrace();
         }
@@ -40,6 +37,17 @@ public abstract class SocialNetworkClient {
     public abstract int getRetweetCount();
     public abstract List<String> getFollowerList();
     public abstract List<String> getFollowingList();
+
+    public abstract void setFollowerCount();
+    public abstract void setFollowingCount();
+    public abstract void setPostCount();
+    public abstract void setCommentsCount();
+    public abstract void setLikesCount();
+    public abstract void setLikedCount();
+    public abstract void setMentionCount();
+    public abstract void setRetweetCount();
+    public abstract void setFollowerList();
+    public abstract void setFollowingList();
 
     private void setFollowingFalse(){
         DBCursor cursor = coll.find();
@@ -93,7 +101,8 @@ public abstract class SocialNetworkClient {
         }
     }
 
-    protected void updateSocialDB(List<String> followerList){
+    public void updateSocialDB(List<String> followerList){
+        this.coll = this.db.getCollection("follower_" + this.network.toString().toLowerCase());
         setFollowingFalse();
         insertFollowers(followerList);
         setNotFollower();
@@ -105,5 +114,40 @@ public abstract class SocialNetworkClient {
 
     public List<String> getUserListNotFollow(){
         return userListNotFollow;
+    }
+
+    public void addFollowingUsersToDB(List<String> ids, int amount, boolean like, boolean comment){
+        this.coll = this.db.getCollection("following_" + this.network.toString().toLowerCase());
+        this.coll.drop();
+        DBCursor cursor;
+        for(int i = 0; i < amount;i++) {
+            String followerID = ids.get(i);
+            BasicDBObject query = new BasicDBObject("id", followerID);
+            cursor = coll.find(query);
+
+            try {
+                if(!cursor.hasNext()) {
+                    BasicDBObject doc = new BasicDBObject("id", followerID)
+                            .append("follows", "false").append("like", like)
+                            .append("comment", comment);
+                    coll.insert(doc);
+
+                }
+            } finally {
+                cursor.close();
+            }
+        }
+    }
+
+    public void showStatistics(){
+        this.coll = this.db.getCollection("following_" + this.network.toString().toLowerCase());
+        DBCursor cursor = coll.find();
+        try {
+            while(cursor.hasNext()) {
+                System.out.println(cursor.next());
+            }
+        } finally {
+            cursor.close();
+        }
     }
 }
