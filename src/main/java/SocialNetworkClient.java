@@ -142,6 +142,7 @@ public abstract class SocialNetworkClient {
     public void showStatistics(){
         this.coll = this.db.getCollection("following_" + this.network.toString().toLowerCase());
         DBCursor cursor = coll.find();
+        System.out.println("Database: ");
         try {
             while(cursor.hasNext()) {
                 System.out.println(cursor.next());

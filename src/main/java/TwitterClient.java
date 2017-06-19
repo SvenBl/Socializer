@@ -2,6 +2,8 @@ import twitter4j.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 import static java.lang.Long.parseLong;
 
@@ -19,6 +21,7 @@ public class TwitterClient extends SocialNetworkClient{
 
     private List<String> followerList;
     private List<String> followingList;
+    private List<String> toFollowList;
 
     public TwitterClient() {
         super(Network.TWITTER);
@@ -32,13 +35,16 @@ public class TwitterClient extends SocialNetworkClient{
             //setLikedCount();
             //setMentionCount();
             setFollowerList();
-            //setFollowingList();
+            setFollowingList();
             //setLikesCount();
             //setRetweetCount();
-            List<String> userRescources = getFollowerByAccount("muxermann");
 
-            followUsersWithOptions(userRescources, 1,false, false);
-
+            setToFollowList("F1Reports");
+            //commentFirstPostByUser(toFollowList.get(0));
+            //likeFirstPostByUser(toFollowList.get(0));
+            //followUsersWithOptions(5,false, false);
+            //followUsersWithOptions(5, true, false);
+            //followUsersWithOptions(5, true, false);
             checkFollowers(this.followerList);
             showStatistics();
 
@@ -138,17 +144,25 @@ public class TwitterClient extends SocialNetworkClient{
         }
     }
 
-    public void followUsersWithOptions(List<String> idList, int amount, boolean like, boolean comment){
+    public void followUsersWithOptions(int amount, boolean like, boolean comment){
         for (int i = 0; i < amount; i++) {
-            followUser(idList.get(i));
+            followUser(this.toFollowList.get(i));
             if(like){
-                likeFirstPostByUser(idList.get(i));
+                likeFirstPostByUser(this.toFollowList.get(i));
             }
             if(comment){
-                commentFirstPostByUser(idList.get(i));
+                commentFirstPostByUser(this.toFollowList.get(i));
+            }
+            this.toFollowList.remove(i);
+            Random rand = new Random();
+            int  n = rand.nextInt(200) + 1;
+            try {
+                TimeUnit.SECONDS.sleep(n);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
-        addFollowingUsersToDB(idList, amount, like, comment);
+        addFollowingUsersToDB(toFollowList, amount, like, comment);
     }
 
     public void likeFirstPostByUser(String id){
@@ -165,7 +179,8 @@ public class TwitterClient extends SocialNetworkClient{
     public void commentFirstPostByUser(String id){
         try {
             ResponseList<Status> tweets = this.twitter.getUserTimeline(Long.parseLong(id));
-            int randomComment = (int)Math.random()*10+1;
+            Random rand = new Random();
+            int  n = rand.nextInt(10) + 1;
             List<String> comments = new ArrayList<String>();
             comments.add("Nice");
             comments.add("Exactly");
@@ -178,7 +193,7 @@ public class TwitterClient extends SocialNetworkClient{
             comments.add("Nice !!");
             comments.add(":O");
 
-            twitter.updateStatus(new StatusUpdate(comments.get(randomComment)+ "@" + twitter.getScreenName()).inReplyToStatusId(tweets.get(0).getId()));
+            twitter.updateStatus(new StatusUpdate(comments.get(n)+ " @" + getScreenNameByID(id)).inReplyToStatusId(tweets.get(0).getId()));
         } catch (TwitterException e) {
             e.printStackTrace();
         }
@@ -267,6 +282,28 @@ public class TwitterClient extends SocialNetworkClient{
         } catch (TwitterException e) {
             e.printStackTrace();
         }
+    }
+
+    public void setToFollowList(String username){
+        List<String> ressources = getFollowerByAccount(username);
+        toFollowList = new ArrayList<String>();
+        // Variable names edited for readability
+        for (String item : ressources) {
+            if (!followingList.contains(item)) {
+                toFollowList.add(item);
+            }
+        }
+    }
+
+    public String getScreenNameByID(String userid){
+        String screenName = "";
+        try {
+            User user = twitter.showUser(parseLong(userid));
+            screenName = user.getScreenName();
+        } catch (TwitterException e) {
+            e.printStackTrace();
+        }
+        return screenName;
     }
 
 }
