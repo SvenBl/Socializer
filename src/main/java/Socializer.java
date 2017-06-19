@@ -19,8 +19,7 @@ public class Socializer {
         System.out.println("Don't follow anymore: " + instagram.getNotFollow());
         System.out.println("List: " + instagram.getUserListNotFollow());
 
-        System.out.println();
-        */
+
 
         //twitter
         System.out.println("Twitter:");
@@ -34,6 +33,8 @@ public class Socializer {
         System.out.println("Mentions: " + twitter.getMentionCount());
         System.out.println("Don't follow anymore: " + twitter.getNotFollow());
         System.out.println("List: " + twitter.getUserListNotFollow());
+        System.out.println();
+        */
     }
 
 

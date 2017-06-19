@@ -128,7 +128,7 @@ public abstract class SocialNetworkClient {
             try {
                 if(!cursor.hasNext()) {
                     BasicDBObject doc = new BasicDBObject("id", followerID)
-                            .append("follows", "false").append("like", like)
+                            .append("follows", false).append("like", like)
                             .append("comment", comment);
                     coll.insert(doc);
 
@@ -150,4 +150,25 @@ public abstract class SocialNetworkClient {
             cursor.close();
         }
     }
+
+    public void checkFollowers(List<String> followerIds){
+        this.coll = this.db.getCollection("following_" + this.network.toString().toLowerCase());
+        DBCursor cursor = coll.find();
+        String id;
+        try {
+            while(cursor.hasNext()) {
+                id = (String) cursor.next().get("id");
+                if(followerIds.contains(id)){
+                    coll.update(new BasicDBObject("id", id),
+                            new BasicDBObject("$set", new BasicDBObject("follows", true)));
+                }else{
+                   coll.update(new BasicDBObject("id", id),
+                            new BasicDBObject("$set", new BasicDBObject("follows", false)));
+                }
+            }
+        } finally {
+            cursor.close();
+        }
+    }
+
 }

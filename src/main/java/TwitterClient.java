@@ -31,15 +31,15 @@ public class TwitterClient extends SocialNetworkClient{
             //setPostCount();
             //setLikedCount();
             //setMentionCount();
-            //setFollowerList();
+            setFollowerList();
             //setFollowingList();
             //setLikesCount();
             //setRetweetCount();
-            List<String> test = getFollowerByAccount("muxermann");
+            List<String> userRescources = getFollowerByAccount("muxermann");
 
-            //commentFirstPostByUser(test.get(0));
-            //followUsers(test, 2);
-            addFollowingUsersToDB(test,2,false,false);
+            followUsersWithOptions(userRescources, 1,false, false);
+
+            checkFollowers(this.followerList);
             showStatistics();
 
 
@@ -138,10 +138,17 @@ public class TwitterClient extends SocialNetworkClient{
         }
     }
 
-    public void followUsers(List<String> idList, int amount){
+    public void followUsersWithOptions(List<String> idList, int amount, boolean like, boolean comment){
         for (int i = 0; i < amount; i++) {
             followUser(idList.get(i));
+            if(like){
+                likeFirstPostByUser(idList.get(i));
+            }
+            if(comment){
+                commentFirstPostByUser(idList.get(i));
+            }
         }
+        addFollowingUsersToDB(idList, amount, like, comment);
     }
 
     public void likeFirstPostByUser(String id){
@@ -171,7 +178,7 @@ public class TwitterClient extends SocialNetworkClient{
             comments.add("Nice !!");
             comments.add(":O");
 
-            twitter.updateStatus(new StatusUpdate(comments.get(randomComment)).inReplyToStatusId(tweets.get(0).getId()));
+            twitter.updateStatus(new StatusUpdate(comments.get(randomComment)+ "@" + twitter.getScreenName()).inReplyToStatusId(tweets.get(0).getId()));
         } catch (TwitterException e) {
             e.printStackTrace();
         }
