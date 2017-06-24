@@ -118,7 +118,6 @@ public abstract class SocialNetworkClient {
 
     public void addFollowingUsersToDB(List<String> ids, int amount, boolean like, boolean comment){
         this.coll = this.db.getCollection("following_" + this.network.toString().toLowerCase());
-        this.coll.drop();
         DBCursor cursor;
         for(int i = 0; i < amount;i++) {
             String followerID = ids.get(i);
