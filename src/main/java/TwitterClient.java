@@ -40,11 +40,11 @@ public class TwitterClient extends SocialNetworkClient{
             //setRetweetCount();
 
             setToFollowList("F1Reports");
-            //commentFirstPostByUser(toFollowList.get(0));
-            //likeFirstPostByUser(toFollowList.get(0));
-            //followUsersWithOptions(5,false, false);
-            //followUsersWithOptions(5, true, false);
-            //followUsersWithOptions(5, true, false);
+            commentFirstPostByUser(toFollowList.get(0));
+            likeFirstPostByUser(toFollowList.get(0));
+            //followUsersWithOptions(2,false, false);
+            //followUsersWithOptions(2, true, false);
+            followUsersWithOptions(2, true, true);
             checkFollowers(this.followerList);
             showStatistics();
 
@@ -155,7 +155,7 @@ public class TwitterClient extends SocialNetworkClient{
             }
             this.toFollowList.remove(i);
             Random rand = new Random();
-            int  n = rand.nextInt(200) + 1;
+            int  n = rand.nextInt(5) + 1;
             try {
                 TimeUnit.SECONDS.sleep(n);
             } catch (InterruptedException e) {
