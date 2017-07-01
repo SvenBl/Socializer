@@ -138,6 +138,26 @@ public abstract class SocialNetworkClient {
         }
     }
 
+    public void addFollowingUserToDB(String id, boolean like, boolean comment){
+        this.coll = this.db.getCollection("following_" + this.network.toString().toLowerCase());
+        DBCursor cursor;
+        BasicDBObject query = new BasicDBObject("id", id);
+        cursor = coll.find(query);
+
+        try {
+            if(!cursor.hasNext()) {
+                BasicDBObject doc = new BasicDBObject("id", id)
+                        .append("follows", false).append("like", like)
+                        .append("comment", comment);
+                coll.insert(doc);
+
+            }
+        } finally {
+            cursor.close();
+        }
+
+    }
+
     public void showStatistics(){
         this.coll = this.db.getCollection("following_" + this.network.toString().toLowerCase());
         DBCursor cursor = coll.find();
@@ -149,6 +169,12 @@ public abstract class SocialNetworkClient {
         } finally {
             cursor.close();
         }
+        System.out.println("Normal: " + coll.count(new BasicDBObject("follows", true)
+                .append("like", false).append("comment", false)) + "/" + coll.count(new BasicDBObject("like", false).append("comment", false)));
+        System.out.println("Normal + Like: " + coll.count(new BasicDBObject("follows", true)
+                .append("like", true).append("comment", false)) + "/" + coll.count(new BasicDBObject("like", true).append("comment", false)));
+        System.out.println("Normal + Like + comment: " + coll.count(new BasicDBObject("follows", true)
+                .append("like", true).append("comment", true)) + "/" + coll.count(new BasicDBObject("like", true).append("comment", true)));
     }
 
     public void checkFollowers(List<String> followerIds){

@@ -1,8 +1,6 @@
 import twitter4j.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static java.lang.Long.parseLong;
@@ -39,12 +37,14 @@ public class TwitterClient extends SocialNetworkClient{
             //setLikesCount();
             //setRetweetCount();
 
-            setToFollowList("RenaultSportF1");
-            //followUsersWithOptions(2,false, false);
-            followUsersWithOptions( 100, true, false);
-            //followUsersWithOptions(2, true, true);
-            checkFollowers(this.followingList);
+
+            //setToFollowList("Formula1NG");
+            //followUsersWithOptions(30,false, false);
+            //followUsersWithOptions( 10, true, false);
+            //followUsersWithOptions(10, true, true);
+            checkFollowers(this.followerList);
             showStatistics();
+
 
 
             //updateSocialDB(this.followerList);
@@ -154,15 +154,17 @@ public class TwitterClient extends SocialNetworkClient{
             }
             this.toFollowList.remove(i);
             Random rand = new Random();
-            int  n = rand.nextInt(20) + 30;
+            int  n = rand.nextInt(50) + 30;
+            addFollowingUserToDB(toFollowList.get(i), like, comment);
             try {
                 TimeUnit.SECONDS.sleep(n);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+            checkRateLimit();
         }
         setFollowingList();
-        addFollowingUsersToDB(toFollowList, amount, like, comment);
+
     }
 
     public void likeFirstPostByUser(String id){
@@ -176,13 +178,18 @@ public class TwitterClient extends SocialNetworkClient{
         } catch (TwitterException e) {
             e.printStackTrace();
         }
+        try {
+            TimeUnit.SECONDS.sleep(1);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     public void commentFirstPostByUser(String id){
         try {
             ResponseList<Status> tweets = this.twitter.getUserTimeline(Long.parseLong(id));
             Random rand = new Random();
-            int  n = rand.nextInt(10) + 1;
+            int  n = rand.nextInt(10);
             List<String> comments = new ArrayList<String>();
             comments.add("Nice");
             comments.add("Exactly");
@@ -196,9 +203,15 @@ public class TwitterClient extends SocialNetworkClient{
             comments.add(":O");
 
             if(tweets.size()!=0){
-            twitter.updateStatus(new StatusUpdate(comments.get(n)+ " @" + getScreenNameByID(id))
-                    .inReplyToStatusId(tweets.get(0).getId()));}
+                twitter.updateStatus(new StatusUpdate(comments.get(n)+ " @" + getScreenNameByID(id))
+                    .inReplyToStatusId(tweets.get(0).getId()));
+            }
         } catch (TwitterException e) {
+            e.printStackTrace();
+        }
+        try {
+            TimeUnit.SECONDS.sleep(1);
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -291,13 +304,50 @@ public class TwitterClient extends SocialNetworkClient{
     public void setToFollowList(String username){
         List<String> ressources = getFollowerByAccount(username);
         this.toFollowList = new ArrayList<String>();
-        // Variable names edited for readability
+
+        Date currentDate = new Date();
         for (String item : ressources) {
-            if (!followingList.contains(item)) {
-                toFollowList.add(item);
+            try {
+                ResponseList<Status> tweets = getTweetsByUser(item);
+                User user = twitter.showUser(parseLong(item));
+                Float ratio = getFollowerFollowingRatio(user);
+                if (!this.followingList.contains(item)
+                        && this.toFollowList.size() < 10
+                        && user.getStatusesCount() >= 10
+                        && getDifferenceDays(tweets.get(0).getCreatedAt(), currentDate) <= 3
+                        && ratio > 0.8 && ratio < 1.2 ) {
+                    System.out.println("test");
+                    this.toFollowList.add(item);
+                }
+                checkRateLimit();
+            } catch (TwitterException e) {
+                e.printStackTrace();
             }
         }
     }
+
+    public static long getDifferenceDays(Date d1, Date d2) {
+        long diff = d2.getTime() - d1.getTime();
+        return TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
+    }
+
+    public ResponseList<Status> getTweetsByUser(String userid){
+        ResponseList<Status> tweets = null;
+        try {
+            tweets = this.twitter.getUserTimeline(parseLong(userid));
+        } catch (TwitterException e) {
+            e.printStackTrace();
+        }
+        return tweets;
+    }
+
+    public float getFollowerFollowingRatio(User user){
+        float follower = user.getFollowersCount();
+        float following = user.getFriendsCount();
+        return follower/following;
+    }
+
+
 
     public String getScreenNameByID(String userid){
         String screenName = "";
@@ -308,6 +358,30 @@ public class TwitterClient extends SocialNetworkClient{
             e.printStackTrace();
         }
         return screenName;
+    }
+
+    public void checkRateLimit(){
+        Map<String ,RateLimitStatus> rateLimitStatus = null;
+        try {
+            rateLimitStatus = twitter.getRateLimitStatus();
+        } catch (TwitterException e) {
+            e.printStackTrace();
+        }
+        for (String endpoint : rateLimitStatus.keySet()) {
+            RateLimitStatus status = rateLimitStatus.get(endpoint);
+            //System.out.println("Endpoint: " + endpoint);
+            //System.out.println(" Limit: " + status.getLimit());
+            //System.out.println(" Remaining: " + status.getRemaining());
+            //System.out.println(" ResetTimeInSeconds: " + status.getResetTimeInSeconds());
+            //System.out.println(" SecondsUntilReset: " + status.getSecondsUntilReset());
+            if(status.getRemaining()==0){
+                try {
+                    TimeUnit.SECONDS.sleep(status.getResetTimeInSeconds());
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
 }
