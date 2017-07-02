@@ -53,12 +53,7 @@ public abstract class SocialNetworkClient {
     public abstract void setToFollowList(String username, int size);
     public abstract void followUsersWithOptions(int amount, boolean like, boolean comment);
 
-
-    public static long getDifferenceDays(Date d1, Date d2) {
-        long diff = d2.getTime() - d1.getTime();
-        return TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
-    }
-
+    //Old db methods
     private void setFollowingFalse(){
         DBCursor cursor = coll.find();
         try {
@@ -124,6 +119,12 @@ public abstract class SocialNetworkClient {
 
     public List<String> getUserListNotFollow(){
         return userListNotFollow;
+    }
+
+    //New db methods
+    public static long getDifferenceDays(Date d1, Date d2) {
+        long diff = d2.getTime() - d1.getTime();
+        return TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
     }
 
     public void addFollowingUsersToDB(List<String> ids, int amount, boolean like, boolean comment){
@@ -212,7 +213,7 @@ public abstract class SocialNetworkClient {
         }
     }
 
-    public List<String> getToUnfollowUsers(){
+    public List<String> getToUnfollowUsers(int days){
         this.coll = this.db.getCollection("following_" + this.network.toString().toLowerCase());
         List<String> list = null;
         DBCursor cursor = coll.find();
@@ -222,7 +223,7 @@ public abstract class SocialNetworkClient {
         try {
             while(cursor.hasNext()) {
                 date = (Date) cursor.next().get("date");
-                if(getDifferenceDays(date, currentDate) > 3){
+                if(getDifferenceDays(date, currentDate) > days){
                     id = (String) cursor.next().get("id");
                     coll.remove(new BasicDBObject("id", id));
                     list.add(id);

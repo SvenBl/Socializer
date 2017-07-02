@@ -1,0 +1,6 @@
+MinRatio=0.5
+MaxRatio=2
+MinPosts=5
+LastPost=3
+Unfollow=3
+ToFollow=stevio1982A

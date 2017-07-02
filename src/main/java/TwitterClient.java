@@ -8,6 +8,8 @@ import static java.lang.Long.parseLong;
 public class TwitterClient extends SocialNetworkClient{
     private Twitter twitter;
     private User userID;
+
+    //statistics
     private int followerCount;
     private int followingCount;
     private int postCount;
@@ -17,28 +19,47 @@ public class TwitterClient extends SocialNetworkClient{
     private int mentionCount;
     private int retweetCount;
 
+
+    //config variables
+    private Float filterMinRatio;
+    private Float filterMaxRatio;
+    private int filterMinPosts;
+    private int filterLastPostInDays;
+
+    //id lists
     private List<String> followerList;
     private List<String> followingList;
     private List<String> toFollowList;
 
-    public TwitterClient() {
+    public TwitterClient(Float minRatio, Float maxRatio, int minPosts, int lastPostInDays, int unfollowAfterDays) {
         super(Network.TWITTER);
         try {
             this.twitter = TwitterFactory.getSingleton();
             this.userID = twitter.showUser(twitter.getId());
 
-            //setFollowerCount();
-            //setFollowingCount();
-            //setPostCount();
-            //setLikedCount();
-            //setMentionCount();
+            //get config variables
+            this.filterMinRatio = minRatio;
+            this.filterMaxRatio = maxRatio;
+            this.filterMinPosts = minPosts;
+            this.filterLastPostInDays = lastPostInDays;
+
+            //set instance variables
+            setFollowerCount();
+            setFollowingCount();
+            setPostCount();
+            setLikedCount();
+            setMentionCount();
             setFollowerList();
             setFollowingList();
-            //setLikesCount();
-            //setRetweetCount();
+            setLikesCount();
+            setRetweetCount();
 
+            //update old db
+            updateSocialDB(this.followerList);
+
+            //update new db
             checkFollowers(this.followerList);
-            List<String> toDeleteList = getToUnfollowUsers();
+            List<String> toDeleteList = getToUnfollowUsers(unfollowAfterDays);
             unfollowUsers(toDeleteList);
 
         } catch (TwitterException e) {
@@ -46,6 +67,7 @@ public class TwitterClient extends SocialNetworkClient{
         }
     }
 
+    //getter
     @Override
     public int getFollowerCount() {
         return followerCount;
@@ -97,18 +119,6 @@ public class TwitterClient extends SocialNetworkClient{
         return this.followingList;
     }
 
-    public void setFollowerList(){
-        this.followerList = new ArrayList<String>();
-        try {
-            long[] ids = this.twitter.getFollowersIDs(-1).getIDs();
-            for (long id : ids) {
-                this.followerList.add(String.valueOf(id));
-            }
-        } catch(TwitterException te) {
-            te.printStackTrace();
-        }
-    }
-
     private List<String> getFollowerByAccount(String name){
         List<String> followerList = new ArrayList<String>();
         try {
@@ -126,6 +136,178 @@ public class TwitterClient extends SocialNetworkClient{
         return followerList;
     }
 
+    private ResponseList<Status> getTweetsByUser(String userid){
+        ResponseList<Status> tweets = null;
+        try {
+            tweets = this.twitter.getUserTimeline(parseLong(userid));
+        } catch (TwitterException e) {
+            checkRateLimit();
+            e.printStackTrace();
+        }
+        return tweets;
+    }
+
+    private float getFollowerFollowingRatio(User user){
+        float follower = user.getFollowersCount();
+        float following = user.getFriendsCount();
+        return follower/following;
+    }
+
+    private String getScreenNameByID(String userid){
+        String screenName = "";
+        try {
+            User user = twitter.showUser(parseLong(userid));
+            screenName = user.getScreenName();
+        } catch (TwitterException e) {
+            e.printStackTrace();
+        }
+        return screenName;
+    }
+
+
+    //setter
+    public void setFollowerList(){
+        this.followerList = new ArrayList<String>();
+        try {
+            long[] ids = this.twitter.getFollowersIDs(-1).getIDs();
+            for (long id : ids) {
+                this.followerList.add(String.valueOf(id));
+            }
+        } catch(TwitterException te) {
+            te.printStackTrace();
+        }
+    }
+
+    public void setFollowingList(){
+        this.followingList = new ArrayList<String>();
+        try {
+            long[] ids = this.twitter.getFriendsIDs(-1).getIDs();
+            for (long id : ids) {
+                this.followingList.add(String.valueOf(id));
+            }
+        } catch(TwitterException te) {
+            te.printStackTrace();
+        }
+    }
+
+    public void setFollowerCount() {
+        this.followerCount = this.userID.getFollowersCount();
+    }
+
+    public void setFollowingCount() {
+        this.followingCount = this.userID.getFriendsCount();
+    }
+
+    public void setPostCount() {
+        this.postCount = userID.getStatusesCount();
+    }
+
+    public void setCommentsCount() {
+        int page = 1;
+        int count = 75;
+        this.commentsCount = 0;
+        try {
+            do {
+                ResponseList<Status> statuses = this.twitter.timelines().getUserTimeline(new Paging(page, count));
+                for (Status status : statuses) {
+                    this.commentsCount += status.getRetweetCount();
+                }
+                page++;
+            } while(this.userID.getStatusesCount() > (page * count));
+        } catch(TwitterException te) {
+            te.printStackTrace();
+        }
+    }
+
+    public void setLikesCount() {
+        List<Status> statuses;
+        try {
+            int page = 1;
+            int count = 200;
+            statuses = this.twitter.getUserTimeline(new Paging(page,count));
+            do{
+                for (Status statuse : statuses) {
+                    this.likesCount += statuse.getFavoriteCount();
+                }
+                page++;
+                statuses = this.twitter.getUserTimeline(new Paging(page,count));
+                if(statuses.size()< count){
+                    for (Status statuse : statuses) {
+                        this.likesCount += statuse.getFavoriteCount();
+                    }
+                }
+            }while(statuses.size()==count);
+
+        } catch (TwitterException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void setRetweetCount() {
+        int page = 1;
+        int count = 75;
+        ResponseList<Status> retweets;
+        try {
+            retweets = twitter.getRetweetsOfMe(new Paging(page, count));
+            do{
+                this.retweetCount += retweets.size();
+                page++;
+                retweets = this.twitter.getRetweetsOfMe(new Paging(page, count));
+                if(retweets.size()< count){
+                    this.retweetCount +=retweets.size();
+                }
+            }while(retweets.size() == count);
+
+        } catch (TwitterException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    public void setLikedCount() {
+        this.likedCount = userID.getFavouritesCount();
+    }
+
+    public void setMentionCount() {
+        try {
+            this.mentionCount = twitter.getMentionsTimeline().size();
+        } catch (TwitterException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void setToFollowList(String username, int size){
+        System.out.println("Create toFollowList...");
+        List<String> ressources = getFollowerByAccount(username);
+        this.toFollowList = new ArrayList<String>();
+        Date currentDate = new Date();
+        for (String item : ressources) {
+            if (this.toFollowList.size() >= size){
+                break;
+            }
+            try {
+                ResponseList<Status> tweets = getTweetsByUser(item);
+                if(!tweets.isEmpty() && tweets!=null){
+                    System.out.print(".");
+                    User user = twitter.showUser(parseLong(item));
+                    Float ratio = getFollowerFollowingRatio(user);
+                    if (!this.followingList.contains(item)
+                            && user.getStatusesCount() >= this.filterMinPosts
+                            && getDifferenceDays(tweets.get(0).getCreatedAt(), currentDate) <= this.filterLastPostInDays
+                            && ratio > this.filterMinRatio && ratio < this.filterMaxRatio) {
+                        this.toFollowList.add(item);
+                        System.out.println("\nAdded: " + item + "to toFollowList");
+                    }
+                }
+                //checkRateLimit();
+            } catch (TwitterException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    //twitter methods
     private void followUser(String id){
         try {
             this.twitter.createFriendship(parseLong(id));
@@ -210,7 +392,7 @@ public class TwitterClient extends SocialNetworkClient{
 
             if(tweets.size()!=0){
                 twitter.updateStatus(new StatusUpdate(comments.get(n)+ " @" + getScreenNameByID(id))
-                    .inReplyToStatusId(tweets.get(0).getId()));
+                        .inReplyToStatusId(tweets.get(0).getId()));
             }
         } catch (TwitterException e) {
             e.printStackTrace();
@@ -220,146 +402,6 @@ public class TwitterClient extends SocialNetworkClient{
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-    }
-
-    public void setFollowingList(){
-        this.followingList = new ArrayList<String>();
-        try {
-            long[] ids = this.twitter.getFriendsIDs(-1).getIDs();
-            for (long id : ids) {
-                this.followingList.add(String.valueOf(id));
-            }
-        } catch(TwitterException te) {
-            te.printStackTrace();
-        }
-    }
-
-    public void setFollowerCount() {
-        this.followerCount = this.userID.getFollowersCount();
-    }
-
-    public void setFollowingCount() {
-        this.followingCount = this.userID.getFriendsCount();
-    }
-
-    public void setPostCount() {
-        this.postCount = userID.getStatusesCount();
-    }
-
-    public void setCommentsCount() {
-
-    }
-
-    public void setLikesCount() {
-        List<Status> statuses;
-        try {
-            int page = 1;
-            int count = 200;
-            statuses = this.twitter.getUserTimeline(new Paging(page,count));
-            do{
-                for (Status statuse : statuses) {
-                    this.likesCount += statuse.getFavoriteCount();
-                }
-                page++;
-                statuses = this.twitter.getUserTimeline(new Paging(page,count));
-                if(statuses.size()< count){
-                    for (Status statuse : statuses) {
-                        this.likesCount += statuse.getFavoriteCount();
-                    }
-                }
-            }while(statuses.size()==count);
-
-        } catch (TwitterException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void setRetweetCount() {
-        int page = 1;
-        int count = 75;
-        ResponseList<Status> retweets;
-        try {
-            retweets = twitter.getRetweetsOfMe(new Paging(page, count));
-            do{
-                this.retweetCount += retweets.size();
-                page++;
-                retweets = this.twitter.getRetweetsOfMe(new Paging(page, count));
-                if(retweets.size()< count){
-                    this.retweetCount +=retweets.size();
-                }
-            }while(retweets.size() == count);
-
-        } catch (TwitterException e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    public void setLikedCount() {
-        this.likedCount = userID.getFavouritesCount();
-    }
-
-    public void setMentionCount() {
-        try {
-            this.mentionCount = twitter.getMentionsTimeline().size();
-        } catch (TwitterException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public void setToFollowList(String username, int size){
-        System.out.println("Create toFollowList...");
-        List<String> ressources = getFollowerByAccount(username);
-        this.toFollowList = new ArrayList<String>();
-        Date currentDate = new Date();
-        for (String item : ressources) {
-            if (this.toFollowList.size() >= size){
-                break;
-            }
-            try {
-                ResponseList<Status> tweets = getTweetsByUser(item);
-                User user = twitter.showUser(parseLong(item));
-                Float ratio = getFollowerFollowingRatio(user);
-                if (!this.followingList.contains(item)
-                        && user.getStatusesCount() >= 10
-                        && getDifferenceDays(tweets.get(0).getCreatedAt(), currentDate) <= 3
-                        && ratio > 0.8 && ratio < 1.2 ) {
-                    this.toFollowList.add(item);
-                }
-                checkRateLimit();
-            } catch (TwitterException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-
-    private ResponseList<Status> getTweetsByUser(String userid){
-        ResponseList<Status> tweets = null;
-        try {
-            tweets = this.twitter.getUserTimeline(parseLong(userid));
-        } catch (TwitterException e) {
-            e.printStackTrace();
-        }
-        return tweets;
-    }
-
-    private float getFollowerFollowingRatio(User user){
-        float follower = user.getFollowersCount();
-        float following = user.getFriendsCount();
-        return follower/following;
-    }
-
-    private String getScreenNameByID(String userid){
-        String screenName = "";
-        try {
-            User user = twitter.showUser(parseLong(userid));
-            screenName = user.getScreenName();
-        } catch (TwitterException e) {
-            e.printStackTrace();
-        }
-        return screenName;
     }
 
     private void checkRateLimit(){
@@ -378,6 +420,7 @@ public class TwitterClient extends SocialNetworkClient{
             //System.out.println(" SecondsUntilReset: " + status.getSecondsUntilReset());
             if(status.getRemaining()==0){
                 try {
+                    System.out.println("Wait " + status.getResetTimeInSeconds() + " seconds until rate limit resets");
                     TimeUnit.SECONDS.sleep(status.getResetTimeInSeconds());
                 } catch (InterruptedException e) {
                     e.printStackTrace();
