@@ -226,7 +226,7 @@ public class InstagramClient extends SocialNetworkClient {
     }
 
     @Override
-    public void followUsersWithOptions(boolean like, boolean comment) {
+    public void followUsersWithOptions(int amount, boolean like, boolean comment) {
 
     }
 }

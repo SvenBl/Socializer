@@ -51,7 +51,7 @@ public abstract class SocialNetworkClient {
     public abstract void setFollowerList();
     public abstract void setFollowingList();
     public abstract void setToFollowList(String username, int size);
-    public abstract void followUsersWithOptions(boolean like, boolean comment);
+    public abstract void followUsersWithOptions(int amount, boolean like, boolean comment);
 
 
     public static long getDifferenceDays(Date d1, Date d2) {

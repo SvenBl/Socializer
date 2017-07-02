@@ -136,11 +136,14 @@ public class TwitterClient extends SocialNetworkClient{
     }
 
     @Override
-    public void followUsersWithOptions(boolean like, boolean comment){
+    public void followUsersWithOptions(int amount, boolean like, boolean comment){
         System.out.println("Follow users...");
         long wait = 0;
         int userFollowed = 0;
-        for (String id : this.toFollowList) {
+        int counter = 0;
+        Iterator<String> i = this.toFollowList.iterator();
+        while (i.hasNext()){
+            String id = i.next();
             followUser(id);
             if(like){
                 likeFirstPostByUser(id);
@@ -154,13 +157,17 @@ public class TwitterClient extends SocialNetworkClient{
             int  n = rand.nextInt(60);
             addFollowingUserToDB(id, like, comment);
             userFollowed++;
-            System.out.println(userFollowed);
+            System.out.println("You followed: " + userFollowed);
+            i.remove();
+            if(counter >= amount){
+                break;
+            }
             try {
                 TimeUnit.SECONDS.sleep(n + wait);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            checkRateLimit();
+
         }
         setFollowingList();
 

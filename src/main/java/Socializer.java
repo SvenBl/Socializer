@@ -7,8 +7,8 @@ public class Socializer {
         //SocialNetworkClient instagram = new InstagramClient();
         SocialNetworkClient twitter = new TwitterClient();
         System.out.println(twitter.showStatistics());
-        //twitter.setToFollowList("F1pitlanebuzz", 2);
-        //twitter.followUsersWithOptions(false, false);
+        twitter.setToFollowList("F1pitlanebuzz", 2);
+        twitter.followUsersWithOptions(1, false, false);
 
         /*
         //instagram
