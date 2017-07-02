@@ -38,12 +38,17 @@ public class TwitterClient extends SocialNetworkClient{
             //setRetweetCount();
 
 
-            //setToFollowList("Formula1NG");
-            //followUsersWithOptions(30,false, false);
+            setToFollowList("F1pitlanebuzz", 2);
+            System.out.println(this.toFollowList);
+            followUsersWithOptions(false, false);
             //followUsersWithOptions( 10, true, false);
             //followUsersWithOptions(10, true, true);
+            //System.out.println("To follow: " + this.toFollowList);
             checkFollowers(this.followerList);
-            showStatistics();
+            List<String> toDeleteList = getToUnfollowUsers();
+            unfollowUsers(toDeleteList);
+
+            System.out.println(showStatistics());
 
 
 
@@ -110,7 +115,7 @@ public class TwitterClient extends SocialNetworkClient{
             long[] ids = this.twitter.getFollowersIDs(-1).getIDs();
             for (long id : ids) {
                 this.followerList.add(String.valueOf(id));
-            }
+            };
         } catch(TwitterException te) {
             te.printStackTrace();
         }
@@ -143,21 +148,21 @@ public class TwitterClient extends SocialNetworkClient{
         }
     }
 
-    public void followUsersWithOptions(int amount, boolean like, boolean comment){
-        for (int i = 0; i < amount; i++) {
-            followUser(this.toFollowList.get(i));
+    public void followUsersWithOptions(boolean like, boolean comment){
+        System.out.println("Follow users...");
+        for (String id : this.toFollowList) {
+            followUser(id);
             if(like){
-                likeFirstPostByUser(this.toFollowList.get(i));
+                likeFirstPostByUser(id);
             }
             if(comment){
-                commentFirstPostByUser(this.toFollowList.get(i));
+                commentFirstPostByUser(id);
             }
-            this.toFollowList.remove(i);
-            Random rand = new Random();
-            int  n = rand.nextInt(50) + 30;
-            addFollowingUserToDB(toFollowList.get(i), like, comment);
+            //Random rand = new Random();
+            //int  n = rand.nextInt(50) + 30;
+            addFollowingUserToDB(id, like, comment);
             try {
-                TimeUnit.SECONDS.sleep(n);
+                TimeUnit.SECONDS.sleep(1);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -301,22 +306,23 @@ public class TwitterClient extends SocialNetworkClient{
         }
     }
 
-    public void setToFollowList(String username){
+    public void setToFollowList(String username, int size){
+        System.out.println("Create toFollowList...");
         List<String> ressources = getFollowerByAccount(username);
         this.toFollowList = new ArrayList<String>();
-
         Date currentDate = new Date();
         for (String item : ressources) {
+            if (this.toFollowList.size() >= size){
+                break;
+            }
             try {
                 ResponseList<Status> tweets = getTweetsByUser(item);
                 User user = twitter.showUser(parseLong(item));
                 Float ratio = getFollowerFollowingRatio(user);
                 if (!this.followingList.contains(item)
-                        && this.toFollowList.size() < 10
                         && user.getStatusesCount() >= 10
                         && getDifferenceDays(tweets.get(0).getCreatedAt(), currentDate) <= 3
                         && ratio > 0.8 && ratio < 1.2 ) {
-                    System.out.println("test");
                     this.toFollowList.add(item);
                 }
                 checkRateLimit();
@@ -326,10 +332,6 @@ public class TwitterClient extends SocialNetworkClient{
         }
     }
 
-    public static long getDifferenceDays(Date d1, Date d2) {
-        long diff = d2.getTime() - d1.getTime();
-        return TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
-    }
 
     public ResponseList<Status> getTweetsByUser(String userid){
         ResponseList<Status> tweets = null;
@@ -380,6 +382,16 @@ public class TwitterClient extends SocialNetworkClient{
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
+            }
+        }
+    }
+
+    public void unfollowUsers(List<String> ids){
+        for(String id : ids){
+            try {
+                this.twitter.destroyFriendship(parseLong(id));
+            } catch (TwitterException e) {
+                e.printStackTrace();
             }
         }
     }

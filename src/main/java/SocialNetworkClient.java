@@ -1,7 +1,9 @@
 import com.mongodb.*;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public abstract class SocialNetworkClient {
     private Network network;
@@ -48,6 +50,12 @@ public abstract class SocialNetworkClient {
     public abstract void setRetweetCount();
     public abstract void setFollowerList();
     public abstract void setFollowingList();
+
+
+    public static long getDifferenceDays(Date d1, Date d2) {
+        long diff = d2.getTime() - d1.getTime();
+        return TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
+    }
 
     private void setFollowingFalse(){
         DBCursor cursor = coll.find();
@@ -128,7 +136,8 @@ public abstract class SocialNetworkClient {
                 if(!cursor.hasNext()) {
                     BasicDBObject doc = new BasicDBObject("id", followerID)
                             .append("follows", false).append("like", like)
-                            .append("comment", comment);
+                            .append("comment", comment)
+                            .append("date", new Date());
                     coll.insert(doc);
 
                 }
@@ -148,7 +157,8 @@ public abstract class SocialNetworkClient {
             if(!cursor.hasNext()) {
                 BasicDBObject doc = new BasicDBObject("id", id)
                         .append("follows", false).append("like", like)
-                        .append("comment", comment);
+                        .append("comment", comment)
+                        .append("date", new Date());
                 coll.insert(doc);
 
             }
@@ -158,10 +168,10 @@ public abstract class SocialNetworkClient {
 
     }
 
-    public void showStatistics(){
+    public String showStatistics(){
         this.coll = this.db.getCollection("following_" + this.network.toString().toLowerCase());
         DBCursor cursor = coll.find();
-        System.out.println("Database: ");
+
         try {
             while(cursor.hasNext()) {
                 System.out.println(cursor.next());
@@ -169,12 +179,15 @@ public abstract class SocialNetworkClient {
         } finally {
             cursor.close();
         }
-        System.out.println("Normal: " + coll.count(new BasicDBObject("follows", true)
-                .append("like", false).append("comment", false)) + "/" + coll.count(new BasicDBObject("like", false).append("comment", false)));
-        System.out.println("Normal + Like: " + coll.count(new BasicDBObject("follows", true)
-                .append("like", true).append("comment", false)) + "/" + coll.count(new BasicDBObject("like", true).append("comment", false)));
-        System.out.println("Normal + Like + comment: " + coll.count(new BasicDBObject("follows", true)
-                .append("like", true).append("comment", true)) + "/" + coll.count(new BasicDBObject("like", true).append("comment", true)));
+        String statistics = "";
+        statistics += "Database:\n";
+        statistics +=("Normal: " + coll.count(new BasicDBObject("follows", true)
+                .append("like", false).append("comment", false)) + "/" + coll.count(new BasicDBObject("like", false).append("comment", false))+"\n");
+        statistics += ("Normal + Like: " + coll.count(new BasicDBObject("follows", true)
+                .append("like", true).append("comment", false)) + "/" + coll.count(new BasicDBObject("like", true).append("comment", false))+"\n");
+        statistics += ("Normal + Like + comment: " + coll.count(new BasicDBObject("follows", true)
+                .append("like", true).append("comment", true)) + "/" + coll.count(new BasicDBObject("like", true).append("comment", true))+"\n");
+        return statistics;
     }
 
     public void checkFollowers(List<String> followerIds){
@@ -192,6 +205,28 @@ public abstract class SocialNetworkClient {
                             new BasicDBObject("$set", new BasicDBObject("follows", false)));
                 }
             }
+        } finally {
+            cursor.close();
+        }
+    }
+
+    public List<String> getToUnfollowUsers(){
+        this.coll = this.db.getCollection("following_" + this.network.toString().toLowerCase());
+        List<String> list = null;
+        DBCursor cursor = coll.find();
+        Date currentDate = new Date();
+        Date date;
+        String id;
+        try {
+            while(cursor.hasNext()) {
+                date = (Date) cursor.next().get("date");
+                if(getDifferenceDays(date, currentDate) > 3){
+                    id = (String) cursor.next().get("id");
+                    coll.remove(new BasicDBObject("id", id));
+                    list.add(id);
+                }
+            }
+            return list;
         } finally {
             cursor.close();
         }
