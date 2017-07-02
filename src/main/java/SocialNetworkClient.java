@@ -50,6 +50,8 @@ public abstract class SocialNetworkClient {
     public abstract void setRetweetCount();
     public abstract void setFollowerList();
     public abstract void setFollowingList();
+    public abstract void setToFollowList(String username, int size);
+    public abstract void followUsersWithOptions(boolean like, boolean comment);
 
 
     public static long getDifferenceDays(Date d1, Date d2) {
@@ -171,16 +173,16 @@ public abstract class SocialNetworkClient {
     public String showStatistics(){
         this.coll = this.db.getCollection("following_" + this.network.toString().toLowerCase());
         DBCursor cursor = coll.find();
-
+        String statistics = "";
+        statistics += "Database:\n";
         try {
             while(cursor.hasNext()) {
-                System.out.println(cursor.next());
+                statistics += cursor.next() + "\n";
             }
         } finally {
             cursor.close();
         }
-        String statistics = "";
-        statistics += "Database:\n";
+
         statistics +=("Normal: " + coll.count(new BasicDBObject("follows", true)
                 .append("like", false).append("comment", false)) + "/" + coll.count(new BasicDBObject("like", false).append("comment", false))+"\n");
         statistics += ("Normal + Like: " + coll.count(new BasicDBObject("follows", true)

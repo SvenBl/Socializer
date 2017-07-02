@@ -138,7 +138,7 @@ public class InstagramClient extends SocialNetworkClient {
         this.followingCount = followingList.size();
     }
 
-    public void setRecentMedia() throws MalformedURLException {
+    private void setRecentMedia() throws MalformedURLException {
         this.recentMedia = getJSONArray(new URL("https://api.instagram.com/v1/users/self/media/recent/?access_token="
                 + accessToken));
     }
@@ -157,8 +157,8 @@ public class InstagramClient extends SocialNetworkClient {
     public void setLikesCount(){
         JSONObject currentObject;
         int likesCount = 0;
-        for(int i = 0; i<this.recentMedia.size();i++) {
-            currentObject = (JSONObject) this.recentMedia.get(i);
+        for (Object aRecentMedia : this.recentMedia) {
+            currentObject = (JSONObject) aRecentMedia;
             JSONObject likesArray = (JSONObject) currentObject.get("likes");
             likesCount += parseInt(likesArray.get("count").toString());
         }
@@ -169,8 +169,8 @@ public class InstagramClient extends SocialNetworkClient {
     public void setCommentsCount(){
         JSONObject currentObject;
         int commentsCount = 0;
-        for(int i = 0; i<recentMedia.size();i++) {
-            currentObject = (JSONObject) recentMedia.get(i);
+        for (Object aRecentMedia : recentMedia) {
+            currentObject = (JSONObject) aRecentMedia;
             JSONObject commentsArray = (JSONObject) currentObject.get("comments");
             commentsCount += parseInt(commentsArray.get("count").toString());
         }
@@ -217,6 +217,16 @@ public class InstagramClient extends SocialNetworkClient {
 
     @Override
     public void setRetweetCount() {
+
+    }
+
+    @Override
+    public void setToFollowList(String username, int size) {
+
+    }
+
+    @Override
+    public void followUsersWithOptions(boolean like, boolean comment) {
 
     }
 }

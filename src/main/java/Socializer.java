@@ -6,6 +6,9 @@ public class Socializer {
 
         //SocialNetworkClient instagram = new InstagramClient();
         SocialNetworkClient twitter = new TwitterClient();
+        System.out.println(twitter.showStatistics());
+        //twitter.setToFollowList("F1pitlanebuzz", 2);
+        //twitter.followUsersWithOptions(false, false);
 
         /*
         //instagram
@@ -22,6 +25,7 @@ public class Socializer {
 
 
         //twitter
+        //use setters before using the getters
         System.out.println("Twitter:");
         System.out.println("Follower: " + twitter.getFollowerCount());
         System.out.println("Following: " + twitter.getFollowingCount());
