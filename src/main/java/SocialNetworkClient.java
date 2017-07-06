@@ -215,7 +215,7 @@ public abstract class SocialNetworkClient {
 
     public List<String> getToUnfollowUsers(int days){
         this.coll = this.db.getCollection("following_" + this.network.toString().toLowerCase());
-        List<String> list = null;
+        List<String> list = new ArrayList<String>();
         DBCursor cursor = coll.find();
         Date currentDate = new Date();
         Date date;
@@ -223,8 +223,8 @@ public abstract class SocialNetworkClient {
         try {
             while(cursor.hasNext()) {
                 date = (Date) cursor.next().get("date");
-                if(getDifferenceDays(date, currentDate) > days){
-                    id = (String) cursor.next().get("id");
+                if(getDifferenceDays(date, currentDate) >= days){
+                    id = (String) cursor.curr().get("id");
                     coll.remove(new BasicDBObject("id", id));
                     list.add(id);
                 }

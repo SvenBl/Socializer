@@ -140,11 +140,11 @@ public class TwitterClient extends SocialNetworkClient{
         ResponseList<Status> tweets = null;
         try {
             tweets = this.twitter.getUserTimeline(parseLong(userid));
+            return tweets;
         } catch (TwitterException e) {
-            checkRateLimit();
-            e.printStackTrace();
+            //e.printStackTrace();
+            return tweets;
         }
-        return tweets;
     }
 
     private float getFollowerFollowingRatio(User user){
@@ -282,32 +282,41 @@ public class TwitterClient extends SocialNetworkClient{
         List<String> ressources = getFollowerByAccount(username);
         this.toFollowList = new ArrayList<String>();
         Date currentDate = new Date();
+        int rateLimitCheck = 179;
         for (String item : ressources) {
             if (this.toFollowList.size() >= size){
                 break;
             }
             try {
                 ResponseList<Status> tweets = getTweetsByUser(item);
-                if(!tweets.isEmpty() && tweets!=null){
+                if(tweets!=null){
                     System.out.print(".");
                     User user = twitter.showUser(parseLong(item));
                     Float ratio = getFollowerFollowingRatio(user);
+                    //filters
                     if (!this.followingList.contains(item)
                             && user.getStatusesCount() >= this.filterMinPosts
                             && getDifferenceDays(tweets.get(0).getCreatedAt(), currentDate) <= this.filterLastPostInDays
                             && ratio > this.filterMinRatio && ratio < this.filterMaxRatio) {
                         this.toFollowList.add(item);
-                        System.out.println("\nAdded: " + item + "to toFollowList");
+                        System.out.println("\nAdded: " + item + " to toFollowList [" + this.toFollowList.size() + "]");
                     }
                 }
-                //checkRateLimit();
+                rateLimitCheck--;
+                if(rateLimitCheck ==0){
+                    System.out.println("Wait 900 seconds until rate limit resets");
+                    rateLimitCheck = 179;
+                    TimeUnit.SECONDS.sleep(900);
+                }
             } catch (TwitterException e) {
+                e.printStackTrace();
+            } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
     }
 
-    //twitter methods
+    //twitter actions
     private void followUser(String id){
         try {
             this.twitter.createFriendship(parseLong(id));
@@ -345,6 +354,7 @@ public class TwitterClient extends SocialNetworkClient{
                 break;
             }
             try {
+                System.out.println("Wait for " + (n+wait) + " before following next user");
                 TimeUnit.SECONDS.sleep(n + wait);
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -359,16 +369,19 @@ public class TwitterClient extends SocialNetworkClient{
         try {
             ResponseList<Status> tweets = this.twitter.getUserTimeline(Long.parseLong(id));
             if(tweets.size()!=0) {
-                if(!tweets.get(0).isFavorited()) {
-                    this.twitter.favorites().createFavorite(tweets.get(0).getId());
+                for(int i = 0; i < tweets.size(); i++){
+                    //get
+                    if(!tweets.get(i).isRetweet() && !tweets.get(i).isFavorited()){
+                        this.twitter.favorites().createFavorite(tweets.get(i).getId());
+                        break;
+                    }
+                    //if only retweets -> use first
+                    if(i == (tweets.size() -1) && !tweets.get(0).isFavorited()) {
+                        this.twitter.favorites().createFavorite(tweets.get(0).getId());
+                    }
                 }
             }
         } catch (TwitterException e) {
-            e.printStackTrace();
-        }
-        try {
-            TimeUnit.SECONDS.sleep(1);
-        } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -390,16 +403,22 @@ public class TwitterClient extends SocialNetworkClient{
             comments.add("Nice !!");
             comments.add(":O");
 
+            long tweetid = 0;
+            int i = 0;
+            while(tweetid==0){
+                if(!tweets.get(i).isRetweet()){
+                    tweetid = tweets.get(i).getId();
+                }
+                i++;
+                if(i >= (tweets.size() -1)){
+                    tweetid = tweets.get(0).getId();
+                }
+            }
             if(tweets.size()!=0){
                 twitter.updateStatus(new StatusUpdate(comments.get(n)+ " @" + getScreenNameByID(id))
-                        .inReplyToStatusId(tweets.get(0).getId()));
+                        .inReplyToStatusId(tweetid));
             }
         } catch (TwitterException e) {
-            e.printStackTrace();
-        }
-        try {
-            TimeUnit.SECONDS.sleep(1);
-        } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -437,7 +456,7 @@ public class TwitterClient extends SocialNetworkClient{
                 } catch (TwitterException e) {
                     e.printStackTrace();
                 }
-                System.out.println("Unfollowed users...");
+                System.out.println("Unfollowed " + ids.size() + " users...");
             }
         } catch (Exception e){
             System.out.println("No users to unfollow...");
