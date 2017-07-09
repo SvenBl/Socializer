@@ -455,8 +455,8 @@ public class TwitterClient extends SocialNetworkClient{
                 } catch (TwitterException e) {
                     e.printStackTrace();
                 }
-                System.out.println("Unfollowed " + ids.size() + " users...");
             }
+            System.out.println("Unfollowed " + ids.size() + " users...");
         } catch (Exception e){
             System.out.println("No users to unfollow...");
         }

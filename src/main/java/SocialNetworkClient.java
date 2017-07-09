@@ -29,6 +29,7 @@ public abstract class SocialNetworkClient {
 
     }
 
+    //getter
     public abstract int getFollowerCount();
     public abstract int getFollowingCount();
     public abstract int getPostCount();
@@ -40,6 +41,8 @@ public abstract class SocialNetworkClient {
     public abstract List<String> getFollowerList();
     public abstract List<String> getFollowingList();
 
+
+    //setter
     public abstract void setFollowerCount();
     public abstract void setFollowingCount();
     public abstract void setPostCount();
@@ -106,7 +109,7 @@ public abstract class SocialNetworkClient {
         }
     }
 
-    public void updateSocialDB(List<String> followerList){
+    protected void updateSocialDB(List<String> followerList){
         this.coll = this.db.getCollection("follower_" + this.network.toString().toLowerCase());
         setFollowingFalse();
         insertFollowers(followerList);
@@ -121,8 +124,10 @@ public abstract class SocialNetworkClient {
         return userListNotFollow;
     }
 
+
+
     //New db methods
-    public static long getDifferenceDays(Date d1, Date d2) {
+    protected static long getDifferenceDays(Date d1, Date d2) {
         long diff = d2.getTime() - d1.getTime();
         return TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
     }
@@ -150,7 +155,7 @@ public abstract class SocialNetworkClient {
         }
     }
 
-    public void addFollowingUserToDB(String id, boolean like, boolean comment){
+    protected void addFollowingUserToDB(String id, boolean like, boolean comment){
         this.coll = this.db.getCollection("following_" + this.network.toString().toLowerCase());
         DBCursor cursor;
         BasicDBObject query = new BasicDBObject("id", id);
@@ -193,7 +198,7 @@ public abstract class SocialNetworkClient {
         return statistics;
     }
 
-    public void checkFollowers(List<String> followerIds){
+    protected void checkFollowers(List<String> followerIds){
         this.coll = this.db.getCollection("following_" + this.network.toString().toLowerCase());
         DBCursor cursor = coll.find();
         String id;
@@ -213,7 +218,7 @@ public abstract class SocialNetworkClient {
         }
     }
 
-    public List<String> getToUnfollowUsers(int days){
+    protected List<String> getToUnfollowUsers(int days){
         this.coll = this.db.getCollection("following_" + this.network.toString().toLowerCase());
         List<String> list = new ArrayList<String>();
         DBCursor cursor = coll.find();
