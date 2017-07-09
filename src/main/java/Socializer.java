@@ -67,7 +67,7 @@ public class Socializer {
             System.out.println();
             System.out.println(twitter.showStatistics());
             twitter.setToFollowList(toFollow, parseInt(args[1]));
-            twitter.followUsersWithOptions(1, Boolean.valueOf(args[2]), Boolean.valueOf(args[3]));
+            twitter.followUsersWithOptions(Boolean.valueOf(args[2]), Boolean.valueOf(args[3]));
 
 
         } catch (IOException ex) {

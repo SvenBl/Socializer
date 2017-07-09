@@ -124,12 +124,10 @@ public class TwitterClient extends SocialNetworkClient{
         try {
             long cursor = -1;
             IDs ids;
-            do {
                 ids = this.twitter.getFollowersIDs(name, cursor);
                 for(long id: ids.getIDs()) {
                     followerList.add(String.valueOf(id));
                 }
-            } while((cursor = ids.getNextCursor()) != 0 && followerList.size()==150);
         } catch(TwitterException te) {
             te.printStackTrace();
         }
@@ -327,34 +325,35 @@ public class TwitterClient extends SocialNetworkClient{
     }
 
     @Override
-    public void followUsersWithOptions(int amount, boolean like, boolean comment){
+    public void followUsersWithOptions(boolean like, boolean comment){
         System.out.println("Follow users...");
         long wait = 0;
         int userFollowed = 0;
         int counter = 0;
         Iterator<String> i = this.toFollowList.iterator();
+        int amount = this.toFollowList.size();
         while (i.hasNext()){
             String id = i.next();
             followUser(id);
             if(like){
                 likeFirstPostByUser(id);
-                wait += 300;
+                wait = 300;
             }
             if(comment){
                 commentFirstPostByUser(id);
-                wait += 900;
+                wait = 900;
             }
             Random rand = new Random();
             int  n = rand.nextInt(60);
             addFollowingUserToDB(id, like, comment);
             userFollowed++;
-            System.out.println("You followed: " + userFollowed);
+            System.out.println("You followed: " + id + " " + userFollowed + "/" + amount);
             i.remove();
             if(counter >= amount){
                 break;
             }
             try {
-                System.out.println("Wait for " + (n+wait) + " before following next user");
+                System.out.println("Wait for " + (n+wait) + " seconds before following next user");
                 TimeUnit.SECONDS.sleep(n + wait);
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -394,7 +393,7 @@ public class TwitterClient extends SocialNetworkClient{
             List<String> comments = new ArrayList<String>();
             comments.add("Nice");
             comments.add("Exactly");
-            comments.add("You say it!");
+            comments.add("You said it!");
             comments.add("Cool");
             comments.add("Wow");
             comments.add("My saying");

@@ -3,4 +3,4 @@ MaxRatio=2
 MinPosts=5
 LastPost=15
 Unfollow=3
-ToFollow=AlanSabatino
+ToFollow=redbullracing
