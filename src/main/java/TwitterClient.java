@@ -1,6 +1,8 @@
 import twitter4j.*;
 
+import java.sql.*;
 import java.util.*;
+import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 import static java.lang.Long.parseLong;
@@ -25,6 +27,7 @@ public class TwitterClient extends SocialNetworkClient{
     private Float filterMaxRatio;
     private int filterMinPosts;
     private int filterLastPostInDays;
+    private int unfollowAfterDays;
 
     //id lists
     private List<String> followerList;
@@ -42,29 +45,45 @@ public class TwitterClient extends SocialNetworkClient{
             this.filterMaxRatio = maxRatio;
             this.filterMinPosts = minPosts;
             this.filterLastPostInDays = lastPostInDays;
+            this.unfollowAfterDays = unfollowAfterDays;
 
             //set instance variables
-            setFollowerCount();
-            setFollowingCount();
-            setPostCount();
-            setLikedCount();
-            setMentionCount();
-            setFollowerList();
-            setFollowingList();
-            setLikesCount();
-            setRetweetCount();
+            setAll();
 
-            //update old db
-            updateSocialDB(this.followerList);
+            //update dbs
+            updateDBs();
 
-            //update new db
-            checkFollowers(this.followerList);
-            List<String> toDeleteList = getToUnfollowUsers(unfollowAfterDays);
-            unfollowUsers(toDeleteList);
 
         } catch (TwitterException e) {
             e.printStackTrace();
         }
+    }
+
+    public void updateDBs(){
+        //update old db
+        updateSocialDB(this.followerList);
+
+        //update new db and unfollow users who didn't follow back
+        checkFollowers(this.followerList);
+        List<String> toDeleteList = getToUnfollowUsers(this.unfollowAfterDays);
+        unfollowUsers(toDeleteList);
+
+        //unfollow users who unfollowed and delete them from db
+        unfollowUsers(getUserListNotFollow());
+        deleteNotFollower(getUserListNotFollow());
+
+    }
+
+    public void setAll(){
+        setFollowerCount();
+        setFollowingCount();
+        setPostCount();
+        setLikedCount();
+        setMentionCount();
+        setFollowerList();
+        setFollowingList();
+        setLikesCount();
+        setRetweetCount();
     }
 
     //getter
@@ -286,6 +305,7 @@ public class TwitterClient extends SocialNetworkClient{
                 break;
             }
             try {
+                Date date = new Date();
                 ResponseList<Status> tweets = getTweetsByUser(item);
                 if(tweets!=null){
                     System.out.print(".");
@@ -297,12 +317,13 @@ public class TwitterClient extends SocialNetworkClient{
                             && getDifferenceDays(tweets.get(0).getCreatedAt(), currentDate) <= this.filterLastPostInDays
                             && ratio > this.filterMinRatio && ratio < this.filterMaxRatio) {
                         this.toFollowList.add(item);
-                        System.out.println("\nAdded: " + item + " to toFollowList [" + this.toFollowList.size() + "]");
+                        System.out.println("\nAdded: " + item + " to toFollowList [" + this.toFollowList.size() + "] at "
+                        + date);
                     }
                 }
                 rateLimitCheck--;
                 if(rateLimitCheck ==0){
-                    System.out.println("Wait 900 seconds until rate limit resets");
+                    System.out.println("Wait 900 seconds until rate limit resets (" + date +")");
                     rateLimitCheck = 179;
                     TimeUnit.SECONDS.sleep(900);
                 }
@@ -333,6 +354,7 @@ public class TwitterClient extends SocialNetworkClient{
         Iterator<String> i = this.toFollowList.iterator();
         int amount = this.toFollowList.size();
         while (i.hasNext()){
+            Date date = new Date();
             String id = i.next();
             followUser(id);
             if(like){
@@ -347,7 +369,7 @@ public class TwitterClient extends SocialNetworkClient{
             int  n = rand.nextInt(60);
             addFollowingUserToDB(id, like, comment);
             userFollowed++;
-            System.out.println("You followed: " + id + " " + userFollowed + "/" + amount);
+            System.out.println("You followed: " + id + " " + userFollowed + "/" + amount + " at " + date);
             i.remove();
             if(counter >= amount){
                 break;
@@ -462,6 +484,36 @@ public class TwitterClient extends SocialNetworkClient{
         }
 
 
+    }
+
+    @Override
+    public void postRandom() {
+        try
+        {
+            Class.forName("com.mysql.jdbc.Driver");
+            Connection conn = null;
+            conn = DriverManager.getConnection("jdbc:mysql://localhost/quotes","root", "");
+            System.out.println("Connected to MySQL DB!");
+            Statement stmt = conn.createStatement() ;
+            String query = "SELECT quote,author FROM quotes\n" +
+                    "ORDER BY RAND()\n" +
+                    "LIMIT 1" ;
+            ResultSet rs = stmt.executeQuery(query) ;
+            String latestStatus = "";
+            while (rs.next()){
+                String quote = rs.getString("quote");
+                String author = rs.getString("author");
+                latestStatus = quote + " - " + author;
+            }
+            Date currentDate = new Date();
+            System.out.println("Post: " + latestStatus + " at " + currentDate);
+            twitter.updateStatus(latestStatus);
+            conn.close();
+        }
+        catch(Exception e)
+        {
+            System.out.print("Do not connect to DB - Error:"+e);
+        }
     }
 
 }

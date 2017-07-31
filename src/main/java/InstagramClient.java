@@ -229,4 +229,19 @@ public class InstagramClient extends SocialNetworkClient {
     public void followUsersWithOptions(boolean like, boolean comment) {
 
     }
+
+    @Override
+    public void postRandom() {
+
+    }
+
+    @Override
+    public void setAll() {
+
+    }
+
+    @Override
+    public void updateDBs() {
+
+    }
 }

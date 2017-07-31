@@ -3,4 +3,7 @@
 arg[0] = config.txt path
 arg[1] = amount for users to follow
 arg[2] = boolean if first post to be liked (true/false) 
-arg[3] = boolean if first post to be commented (true/false) 
+arg[3] = boolean if first post to be commented (true/false)
+
+Executible jar file is located in out folder
+github link: https://github.com/SvenBl/Socializer

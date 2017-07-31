@@ -55,6 +55,10 @@ public abstract class SocialNetworkClient {
     public abstract void setFollowingList();
     public abstract void setToFollowList(String username, int size);
     public abstract void followUsersWithOptions(boolean like, boolean comment);
+    public abstract void setAll();
+    public abstract void updateDBs();
+
+    public abstract void postRandom();
 
     //Old db methods
     private void setFollowingFalse(){
@@ -106,6 +110,13 @@ public abstract class SocialNetworkClient {
 
         } finally {
             cursor.close();
+        }
+    }
+
+    protected void deleteNotFollower(List<String> ids){
+        this.coll = this.db.getCollection("follower_" + this.network.toString().toLowerCase());
+        for(String id : ids){
+            this.coll.remove(new BasicDBObject("id", id));
         }
     }
 

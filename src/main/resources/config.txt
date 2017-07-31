@@ -1,6 +1,9 @@
 MinRatio=0.5
-MaxRatio=2
+MaxRatio=5
 MinPosts=5
 LastPost=15
-Unfollow=3
-ToFollow=redbullracing
+Unfollow=4
+FollowPerDay=300
+Like=true
+Comment=false
+ToFollow=MindsConsole,DeepLifeQuotes,claraquiambao,Quotes_Life,thequote,LifeHeIps,ohteenquotes,TheLifeDiaries,ItsLifeFact,WizdomsTweets,mindsetdev,Lmao,ThatsSarcasm,WhennBoys,ithinkthatway
