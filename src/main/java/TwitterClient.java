@@ -1,4 +1,5 @@
 import twitter4j.*;
+import twitter4j.conf.ConfigurationBuilder;
 
 import java.sql.*;
 import java.util.*;
@@ -34,10 +35,19 @@ public class TwitterClient extends SocialNetworkClient{
     private List<String> followingList;
     private List<String> toFollowList;
 
-    public TwitterClient(Float minRatio, Float maxRatio, int minPosts, int lastPostInDays, int unfollowAfterDays) {
+    public TwitterClient(Float minRatio, Float maxRatio, int minPosts, int lastPostInDays, int unfollowAfterDays,
+                         String consumerKey, String ConsumerSecret, String AccessToken, String AccessTokenSecret) {
         super(Network.TWITTER);
         try {
             this.twitter = TwitterFactory.getSingleton();
+            ConfigurationBuilder cb = new ConfigurationBuilder();
+            cb.setDebugEnabled(true)
+                    .setOAuthConsumerKey(consumerKey)
+                    .setOAuthConsumerSecret(ConsumerSecret)
+                    .setOAuthAccessToken(AccessToken)
+                    .setOAuthAccessTokenSecret(AccessTokenSecret);
+            TwitterFactory tf = new TwitterFactory(cb.build());
+            this.twitter = tf.getInstance();
             this.userID = twitter.showUser(twitter.getId());
 
             //get config variables
@@ -57,6 +67,25 @@ public class TwitterClient extends SocialNetworkClient{
         } catch (TwitterException e) {
             e.printStackTrace();
         }
+    }
+
+    public TwitterClient(Float minRatio, Float maxRatio, int minPosts, int lastPostInDays, int unfollowAfterDays) {
+        super(Network.TWITTER);
+        this.twitter = TwitterFactory.getSingleton();
+
+        //get config variables
+        this.filterMinRatio = minRatio;
+        this.filterMaxRatio = maxRatio;
+        this.filterMinPosts = minPosts;
+        this.filterLastPostInDays = lastPostInDays;
+        this.unfollowAfterDays = unfollowAfterDays;
+
+        //set instance variables
+        setAll();
+
+        //update dbs
+        updateDBs();
+
     }
 
     public void updateDBs(){
